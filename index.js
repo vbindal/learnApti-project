@@ -22,6 +22,7 @@ app.get("/getAll", async(req,res)=>{
         const allData = await questions.find({})
 
         res.send({status : "ok", data : allData})
+        //console.log(allData)
 
     }catch(err){
         console.log(err);
