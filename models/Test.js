@@ -14,7 +14,6 @@ const TestSchema = Schema({
         type: String,
         required: true
     },
-
     marks: {
         type: Number,
         required: true
@@ -25,7 +24,10 @@ const TestSchema = Schema({
             type: String,
             required: true
     },
-
+    rules: {
+        type: Array,
+        required: true
+    },
     scores: {
         type: Array,
         default: []
@@ -33,4 +35,4 @@ const TestSchema = Schema({
 }}
 )
 
-module.exports = mongoose.model('Test',TestSchema);
+module.exports = mongoose.model('Test',TestSchema,'tests');
