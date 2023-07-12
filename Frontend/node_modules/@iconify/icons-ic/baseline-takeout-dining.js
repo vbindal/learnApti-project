@@ -1,0 +1,7 @@
+const data = {
+	"width": 24,
+	"height": 24,
+	"body": "<path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M5.26 11h13.48l-.67 9H5.93l-.67-9zm3.76-7h5.95L19 7.38l1.59-1.59L22 7.21L19.21 10H4.79L2 7.21L3.41 5.8L5 7.38L9.02 4z\"/>"
+};
+exports.__esModule = true;
+exports.default = data;
