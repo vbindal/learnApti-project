@@ -5,11 +5,12 @@ const {
   check,
   validationResult
 } = require('express-validator');
-
+const multer = require('multer');
+const upload = multer();
 
 const Classroom = require('../models/Classroom');
 const User = require('../models/User');
-const Test = require('../models/User');
+const Test = require('../models/Test');
 const Question = require('../models/Question');
 
 // Utiliy Functions
@@ -46,24 +47,6 @@ function GenerateTest(Questions, Rules) {
   return res;
 }
 
-//function DuplicateQuestion(ques) {
-//  var read_vals = [];
-//  var flag = 0;
-//  for (var j = 0; j < ques.length; j++) {
-//    read_vals[j] = ques[j];
-//  }
-//  for (var i = 0; i < ques.length; i++) {
-//    flag = 0;
-//    for (var k = 0; k < ques.length; k++) {
-//      if (ques[i] === read_vals[k]) {
-//        flag = flag + 1;
-//      }
-//      if (flag !== 1) {
-//        return res.json({ msg: 'This question already exists' });
-//      }
-//    }
-//  }
-//}
 
 // @route    GET api/test/:code
 // @desc     Get current classroom tests
@@ -88,10 +71,10 @@ router.get('/:code', auth, async (req, res) => {
   }
 });
 
+
 // @route    POST api/test/:id
 // @desc     Create Test
 // @access   Private
-
 router.post('/', auth, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -104,7 +87,7 @@ router.post('/', auth, async (req, res) => {
   const {
     details,
     rules,
-    questions
+    questionIds
   } = req.body;
   const {
     name,
@@ -114,7 +97,7 @@ router.post('/', auth, async (req, res) => {
     code,
     marks
   } = details;
-  var isAdmin = await Classroom.findOne({
+  const isAdmin = await Classroom.findOne({
     code: code
   }).then((value) => {
     return value.author._id.toString() === req.user.id;
@@ -133,11 +116,11 @@ router.post('/', auth, async (req, res) => {
   */
 
   // save validation errors in an array
-  var validationErrors = [];
+  const validationErrors = [];
 
   // check if due date is in the past
-  var dueDate = new Date(details.dueDate);
-  var currDate = new Date();
+  const dueDate = new Date(details.dueDate);
+  const currDate = new Date();
 
   if (
     dueDate.getDate() < currDate.getDate &&
@@ -156,6 +139,10 @@ router.post('/', auth, async (req, res) => {
   if (validationErrors.length) return res.status(400).json({
     err: validationErrors
   });
+  
+  // Fetch questions from the database based on the provided question IDs
+  const questions = await Question.find({ _id: { $in: questionIds } });
+
 
   try {
     const newTest = new Test({
@@ -167,11 +154,14 @@ router.post('/', auth, async (req, res) => {
         hrs: durationHrs,
         min: durationMin
       },
+      questions,
       classroom: code,
       rules
     });
-
-    await Question.insertMany(questions);
+    
+    // Assign the fetched questions to the `questions` array in the new test
+     newTest.questions = questions;
+    //await Question.insertMany(questions);
 
     await newTest.save();
     return res.status(200).json(newTest);
@@ -181,9 +171,12 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+
+
 // @route    GET api/test/:id
 // @desc     Generate test by id
 // @access   Private
+
 router.get('/start/:id', auth, async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
@@ -225,13 +218,15 @@ router.get('/start/:id', auth, async (req, res) => {
   }
 });
 
+
 // @route    POST api/test/:id
 // @desc     Submit test by id
 // @access   Private
+
 router.post('/id/:id', auth, async (req, res) => {
   try {
-    var score = {};
-    var marks = 0;
+    let score = {};
+    let marks = 0;
     const test = await Test.findById(req.params.id);
 
     if (!test) return res.status(400).json({
@@ -273,8 +268,7 @@ router.post('/id/:id', auth, async (req, res) => {
     const {
       name,
       _id,
-      email,
-      avatarURL
+      email
     } = await User.findById(req.user.id, {
       password: 0
     });
@@ -283,7 +277,6 @@ router.post('/id/:id', auth, async (req, res) => {
       name,
       _id,
       email,
-      avatarURL,
       marks
     });
     await Test.findByIdAndUpdate(req.params.id, {
@@ -292,7 +285,6 @@ router.post('/id/:id', auth, async (req, res) => {
           name,
           _id,
           email,
-          avatarURL,
           marks,
           maxMarks: parseFloat(test.marks, 10)
         }
@@ -309,6 +301,7 @@ router.post('/id/:id', auth, async (req, res) => {
 // @route    DELETE api/test/:id
 // @desc     Delete test by id
 // @access   Private
+
 router.delete('/id/:id', auth, async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
@@ -340,6 +333,7 @@ router.delete('/id/:id', auth, async (req, res) => {
 // @route    POST api/score/:id
 // @desc     GET Scores of current test
 // @access   Private
+
 router.get('/id/:id', auth, async (req, res) => {
   try {
     const test = await Test.findById(req.params.id, {
@@ -351,7 +345,7 @@ router.get('/id/:id', auth, async (req, res) => {
       });
     }
 
-    var isAdmin = await Classroom.findOne({
+    const isAdmin = await Classroom.findOne({
       code: test.classroom
     }).then((value) => {
       return value.author._id.toString() === req.user.id;
@@ -368,5 +362,6 @@ router.get('/id/:id', auth, async (req, res) => {
     return res.status(500).send('Server Error');
   }
 });
+
 
 module.exports = router;
