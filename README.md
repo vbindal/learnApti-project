@@ -1,7 +1,7 @@
 ﻿# LearnApti-project
 
 <b><li>A Secure Testing platform based on the Concept of Classrooms</b>
-<b><li>my role is to do all the backend part in this project and all those backend files are in this Backend_Branch</b>
+<b><li>My responsibility was to handle all the backend elements of this project, and all the backend files are located in this Backend_Branch.</b>
 <b><li>For complete repo first switch to mainBranch and then perform these operations</b>
 
 
